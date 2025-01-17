@@ -52,7 +52,7 @@ export const GameArea = () => {
       >
         <div className="bg-brown-500 rounded-full p-8 shadow-lg hover:shadow-xl transition-shadow">
           <img 
-            src="https://images.unsplash.com/photo-1620048269620-77fa550f01c7?auto=format&fit=crop&w=200&h=200" 
+            src="https://littlegnome.donotpoly.ir/coco-character.png" 
             alt="Gnome"
             className="w-32 h-32 rounded-full"
           />
