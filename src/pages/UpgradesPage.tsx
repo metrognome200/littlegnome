@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from './supabaseClient';
+import { supabase } from './lib/supabase.ts';
 import { Zap, Shield, Rocket, Clock, Target, Star } from 'lucide-react';
 
 const icons = {
