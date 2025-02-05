@@ -1,19 +1,67 @@
-import React from 'react';
-import { Users, UserPlus, Share2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Users, Share2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export const FriendsPage = () => {
-  const friends = [
-    {
-      address: '0x1234...5678',
-      level: 15,
-      joinedDate: '2024-02-20',
-    },
-    {
-      address: '0x8765...4321',
-      level: 23,
-      joinedDate: '2024-02-19',
-    },
-  ];
+  const [friends, setFriends] = useState([]);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchFriends = async () => {
+      const telegramUser = window.Telegram.WebApp.initDataUnsafe?.user;
+      if (telegramUser) {
+        const { data: userData, error: userError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('wallet_address', telegramUser.id)
+          .single();
+
+        if (userError) {
+          console.error('Error fetching user data:', userError);
+          return;
+        }
+
+        setUser(userData);
+
+        const { data: friendsData, error: friendsError } = await supabase
+          .from('friends')
+          .select('friend_id, status')
+          .eq('profile_id', userData.id);
+
+        if (friendsError) {
+          console.error('Error fetching friends data:', friendsError);
+          return;
+        }
+
+        // Fetch friend profiles
+        const friendProfiles = await Promise.all(
+          friendsData.map(async (friend) => {
+            const { data: friendProfile, error: friendProfileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', friend.friend_id)
+              .single();
+
+            if (friendProfileError) {
+              console.error('Error fetching friend profile:', friendProfileError);
+              return null;
+            }
+
+            return {
+              ...friendProfile,
+              status: friend.status
+            };
+          })
+        );
+
+        setFriends(friendProfiles.filter((profile) => profile !== null));
+      }
+    };
+
+    fetchFriends();
+  }, []);
+
+  if (!user) return <div>Loading...</div>;
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 p-6 pb-24">
@@ -44,18 +92,18 @@ export const FriendsPage = () => {
             Friends List
           </h2>
           <div className="space-y-4">
-            {friends.map((friend, index) => (
+            {friends.map((friend) => (
               <div
-                key={index}
+                key={friend.id}
                 className="flex items-center justify-between p-3 bg-gray-700 rounded-lg"
               >
                 <div>
-                  <div className="font-medium">{friend.address}</div>
+                  <div className="font-medium">{friend.wallet_address}</div>
                   <div className="text-sm text-gray-400">
-                    Joined: {friend.joinedDate}
+                    Joined: {friend.created_at.split('T')[0]}
                   </div>
                 </div>
-                <div className="text-yellow-400">Level {friend.level}</div>
+                <div className="text-yellow-400">Level {friend.click_power}</div>
               </div>
             ))}
           </div>
